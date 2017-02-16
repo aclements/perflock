@@ -55,6 +55,8 @@ func main() {
 	flagList := flag.Bool("list", false, "print current and pending commands")
 	flagSocket := flag.String("socket", "/var/run/perflock.socket", "connect to socket `path`")
 	flagShared := flag.Bool("shared", false, "acquire lock in shared mode (default: exclusive mode)")
+	flagGovernor := &governorFlag{percent: 90}
+	flag.Var(flagGovernor, "governor", "set CPU frequency to `percent` between the min and max\n\twhile running command, or \"none\" for no adjustment")
 	flag.Parse()
 
 	if *flagDaemon {
@@ -93,7 +95,33 @@ func main() {
 		}
 		c.Acquire(*flagShared, false, shellEscapeList(cmd))
 	}
+	if !*flagShared && flagGovernor.percent >= 0 {
+		c.SetGovernor(flagGovernor.percent)
+	}
 	run(cmd)
+}
+
+type governorFlag struct {
+	percent int
+}
+
+func (f *governorFlag) String() string {
+	if f.percent < 0 {
+		return "none"
+	}
+	return fmt.Sprintf("%d%%", f.percent)
+}
+
+func (f *governorFlag) Set(v string) error {
+	if v == "none" {
+		f.percent = -1
+	} else {
+		n, err := fmt.Scanf("%d%%", &f.percent)
+		if err != nil || n != len(v) {
+			return fmt.Errorf("governor must be \"none\" or \"N%%\"")
+		}
+	}
+	return nil
 }
 
 // run executes args as a command and exits with the command's exit

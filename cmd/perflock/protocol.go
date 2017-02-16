@@ -24,7 +24,16 @@ type ActionAcquire struct {
 type ActionList struct {
 }
 
+// ActionSetGovernor sets the CPU frequency of all CPUs. The caller
+// must hold the lock.
+type ActionSetGovernor struct {
+	// Percent indicates the percent to set the CPU governor to
+	// between the lower and highest available frequencies.
+	Percent int
+}
+
 func init() {
 	gob.Register(ActionAcquire{})
 	gob.Register(ActionList{})
+	gob.Register(ActionSetGovernor{})
 }

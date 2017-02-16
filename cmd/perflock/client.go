@@ -6,6 +6,7 @@ package main
 
 import (
 	"encoding/gob"
+	"fmt"
 	"log"
 	"net"
 )
@@ -56,4 +57,13 @@ func (c *Client) List() []string {
 	var list []string
 	c.do(PerfLockAction{ActionList{}}, &list)
 	return list
+}
+
+func (c *Client) SetGovernor(percent int) error {
+	var err string
+	c.do(PerfLockAction{ActionSetGovernor{Percent: percent}}, &err)
+	if err == "" {
+		return nil
+	}
+	return fmt.Errorf("%s", err)
 }

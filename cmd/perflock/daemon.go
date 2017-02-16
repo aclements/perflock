@@ -13,6 +13,8 @@ import (
 	"os"
 	"os/user"
 	"time"
+
+	"github.com/aclements/perflock/internal/cpupower"
 )
 
 var theLock PerfLock
@@ -52,6 +54,8 @@ type Server struct {
 
 	locker    *Locker
 	acquiring bool
+
+	oldGovernors []*governorSettings
 }
 
 func NewServer(c net.Conn) *Server {
@@ -138,6 +142,21 @@ func (s *Server) Serve() {
 					return
 				}
 
+			case ActionSetGovernor:
+				if s.locker == nil {
+					log.Printf("protocol error: setting governor without lock")
+					return
+				}
+				err := s.setGovernor(action.Percent)
+				errString := ""
+				if err != nil {
+					errString = err.Error()
+				}
+				if err := gw.Encode(errString); err != nil {
+					log.Print(err)
+					return
+				}
+
 			default:
 				log.Printf("unknown message")
 				return
@@ -155,8 +174,64 @@ func (s *Server) Serve() {
 }
 
 func (s *Server) drop() {
+	// Restore the CPU governor before releasing the lock.
+	if s.oldGovernors != nil {
+		s.restoreGovernor()
+		s.oldGovernors = nil
+	}
+	// Release the lock.
 	if s.locker != nil {
 		theLock.Dequeue(s.locker)
 		s.locker = nil
 	}
+}
+
+type governorSettings struct {
+	domain   *cpupower.Domain
+	min, max int
+}
+
+func (s *Server) setGovernor(percent int) error {
+	domains, err := cpupower.Domains()
+	if err != nil {
+		return err
+	}
+	if len(domains) == 0 {
+		return fmt.Errorf("no power domains")
+	}
+
+	// Save current frequency settings.
+	old := []*governorSettings{}
+	for _, d := range domains {
+		min, max, err := d.CurrentRange()
+		if err != nil {
+			return err
+		}
+		old = append(old, &governorSettings{d, min, max})
+	}
+	s.oldGovernors = old
+
+	// Set new settings.
+	for _, d := range domains {
+		min, max := d.AvailableRange()
+		target := (max-min)*percent/100 + min
+		err := d.SetRange(target, target)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Server) restoreGovernor() error {
+	var err error
+	for _, g := range s.oldGovernors {
+		// Try to set all of the domains, even if one fails.
+		err1 := g.domain.SetRange(g.min, g.max)
+		if err1 != nil && err == nil {
+			err = err1
+		}
+	}
+	return err
 }
