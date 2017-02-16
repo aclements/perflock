@@ -22,3 +22,19 @@ func readInt(path string) (int, error) {
 func writeInt(path string, val int) error {
 	return ioutil.WriteFile(path, []byte(fmt.Sprintf("%d", val)), 0)
 }
+
+func readInts(path string) ([]int, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	fields := strings.Fields(string(data))
+	ints := make([]int, len(fields))
+	for i, field := range fields {
+		ints[i], err = strconv.Atoi(field)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return ints, nil
+}

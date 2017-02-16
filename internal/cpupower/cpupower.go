@@ -7,33 +7,50 @@ package cpupower
 
 import (
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 )
 
 // Domain is a frequency scaling domain. This may include more than
 // one CPU.
 type Domain struct {
-	path     string
-	min, max int
+	path      string
+	min, max  int
+	available []int
 }
 
-var policyRe = regexp.MustCompile(`policy\d+$`)
+var cpuRe = regexp.MustCompile(`cpu\d+$`)
 
 // Domains returns the frequency scaling domains of this host.
 func Domains() ([]*Domain, error) {
-	dir := "/sys/devices/system/cpu/cpufreq"
+	dir := "/sys/devices/system/cpu"
 	fs, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
 
 	var domains []*Domain
+	haveDomains := make(map[string]bool)
 	for _, f := range fs {
-		if !f.IsDir() || !policyRe.MatchString(f.Name()) {
+		if !f.IsDir() || !cpuRe.MatchString(f.Name()) {
 			continue
 		}
-		pdir := filepath.Join(dir, f.Name())
+		pdir := filepath.Join(dir, f.Name(), "cpufreq")
+
+		// Get the frequency domain, if any.
+		cpus, err := ioutil.ReadFile(filepath.Join(pdir, "freqdomain_cpus"))
+		if err == nil {
+			if haveDomains[string(cpus)] {
+				// We already have a CPU in this domain.
+				continue
+			}
+			haveDomains[string(cpus)] = true
+		} else if !os.IsNotExist(err) {
+			return nil, err
+		}
+
 		min, err := readInt(filepath.Join(pdir, "cpuinfo_min_freq"))
 		if err != nil {
 			return nil, err
@@ -42,15 +59,21 @@ func Domains() ([]*Domain, error) {
 		if err != nil {
 			return nil, err
 		}
-		domains = append(domains, &Domain{pdir, min, max})
+		avail, err := readInts(filepath.Join(pdir, "scaling_available_frequencies"))
+		if err != nil && !os.IsNotExist(err) {
+			return nil, err
+		}
+		sort.Ints(avail)
+		domains = append(domains, &Domain{pdir, min, max, avail})
 	}
 	return domains, nil
 }
 
 // AvailableRange returns the available frequency range this CPU is
-// capable of.
-func (d *Domain) AvailableRange() (int, int) {
-	return d.min, d.max
+// capable of and the set of available frequencies in ascending order
+// or nil if any frequency can be set.
+func (d *Domain) AvailableRange() (int, int, []int) {
+	return d.min, d.max, d.available
 }
 
 // CurrentRange returns the current frequency range this CPU's

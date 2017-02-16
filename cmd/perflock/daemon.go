@@ -212,9 +212,27 @@ func (s *Server) setGovernor(percent int) error {
 	s.oldGovernors = old
 
 	// Set new settings.
+	abs := func(x int) int {
+		if x < 0 {
+			return -x
+		}
+		return x
+	}
 	for _, d := range domains {
-		min, max := d.AvailableRange()
+		min, max, avail := d.AvailableRange()
 		target := (max-min)*percent/100 + min
+
+		// Find the nearest available frequency.
+		if len(avail) != 0 {
+			closest := avail[0]
+			for _, a := range avail {
+				if abs(target-a) < abs(target-closest) {
+					closest = a
+				}
+			}
+			target = closest
+		}
+
 		err := d.SetRange(target, target)
 		if err != nil {
 			return err
