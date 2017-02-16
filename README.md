@@ -4,8 +4,8 @@ hosts.
 To build and install perflock system-wide, run
 
     $ go get github.com/aclements/perflock/cmd/perflock
-    $ sudo mv $GOPATH/bin/perflock /usr/bin/perflock
-    $ sudo chmod a+x /usr/bin/perflock
+    $ sudo install $GOPATH/bin/perflock /usr/bin/perflock
+    $ rm $GOPATH/bin/perflock
 
 To enable the perflock daemon on boot, see the instructions for your
 init system in the `init/` directory.
