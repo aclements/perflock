@@ -68,6 +68,8 @@ func main() {
 		return
 	}
 
+	log.SetFlags(0)
+
 	if *flagList {
 		if flag.NArg() > 0 {
 			flag.Usage()

@@ -21,7 +21,8 @@ type Client struct {
 func NewClient(socketPath string) *Client {
 	c, err := net.Dial("unix", socketPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		log.Fatal("Is the perflock daemon running?")
 	}
 
 	// Send credentials.
