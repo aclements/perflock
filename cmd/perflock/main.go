@@ -37,6 +37,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -118,10 +120,11 @@ func (f *governorFlag) Set(v string) error {
 	if v == "none" {
 		f.percent = -1
 	} else {
-		n, err := fmt.Scanf("%d%%", &f.percent)
-		if err != nil || n != len(v) {
+		m := regexp.MustCompile(`^([0-9]+)%$`).FindStringSubmatch(v)
+		if m == nil {
 			return fmt.Errorf("governor must be \"none\" or \"N%%\"")
 		}
+		f.percent, _ = strconv.Atoi(m[1])
 	}
 	return nil
 }
