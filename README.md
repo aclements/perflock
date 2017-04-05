@@ -7,5 +7,9 @@ To build and install perflock system-wide, run
     $ sudo install $GOPATH/bin/perflock /usr/bin/perflock
     $ rm $GOPATH/bin/perflock
 
+To start the perflock daemon manually, run
+
+    $ sudo -b perflock -daemon
+
 To enable the perflock daemon on boot, see the instructions for your
 init system in the `init/` directory.
