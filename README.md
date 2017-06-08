@@ -1,11 +1,22 @@
 Perflock is a simple locking wrapper for running benchmarks on shared
 hosts.
 
-To build and install perflock system-wide, run
+To build, install, and start perflock system-wide, run
+
+    $ go get github.com/aclements/perflock/cmd/perflock
+    $ cd $GOPATH/src/github.com/aclements/perflock/cmd/perflock
+    $ ./install.bash
+
+If your init system is supported, this will also configure perflock to
+start automatically on boot.
+
+Manual installation
+-------------------
+
+To install perflock manually, run
 
     $ go get github.com/aclements/perflock/cmd/perflock
     $ sudo install $GOPATH/bin/perflock /usr/bin/perflock
-    $ rm $GOPATH/bin/perflock
 
 To start the perflock daemon manually, run
 
