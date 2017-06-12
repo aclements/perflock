@@ -4,7 +4,7 @@ hosts.
 To build, install, and start perflock system-wide, run
 
     $ go get github.com/aclements/perflock/cmd/perflock
-    $ cd $GOPATH/src/github.com/aclements/perflock/cmd/perflock
+    $ cd $GOPATH/src/github.com/aclements/perflock
     $ ./install.bash
 
 If your init system is supported, this will also configure perflock to
