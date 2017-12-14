@@ -21,7 +21,7 @@ if [[ -d /etc/init ]]; then
     sudo install -m 0644 init/upstart/perflock.conf /etc/init/
 fi
 
-if /usr/bin/perflock -list 1>&2 >/dev/null; then
+if /usr/bin/perflock -list >/dev/null 2>&1; then
     echo "Not starting perflock daemon (already running)" 1>&2
 else
     echo "Starting perflock daemon" 1>&2
