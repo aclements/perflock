@@ -1,0 +1,10 @@
+[Unit]
+Description=Perflock daemon
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/perflock -daemon
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
