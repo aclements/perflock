@@ -102,6 +102,7 @@ func main() {
 	if !*flagShared && flagGovernor.percent >= 0 {
 		c.SetGovernor(flagGovernor.percent)
 	}
+	ignoreSignals()
 	run(cmd)
 }
 
