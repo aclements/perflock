@@ -53,18 +53,21 @@ func main() {
 		fmt.Fprintf(os.Stderr, "\n")
 		flag.PrintDefaults()
 	}
-	flagDaemon := flag.Bool("daemon", false, "start perflock daemon")
+	flagDaemon := flag.Bool("daemon", false, "start perflock daemon, defaulting to -governor=90%")
 	flagList := flag.Bool("list", false, "print current and pending commands")
 	flagSocket := flag.String("socket", "/var/run/perflock.socket", "connect to socket `path`")
 	flagShared := flag.Bool("shared", false, "acquire lock in shared mode (default: exclusive mode)")
-	flagGovernor := &governorFlag{percent: 90}
-	flag.Var(flagGovernor, "governor", "set CPU frequency to `percent` between the min and max\n\twhile running command, or \"none\" for no adjustment")
+	flagGovernor := &governorFlag{percent: -1}
+	flag.Var(flagGovernor, "governor", "override the CPU frequency to `percent` between the min and max")
 	flag.Parse()
 
 	if *flagDaemon {
 		if flag.NArg() > 0 {
 			flag.Usage()
 			os.Exit(2)
+		}
+		if flagGovernor.percent == 0 {
+			flagGovernor.percent = 90
 		}
 		doDaemon(*flagSocket)
 		return
