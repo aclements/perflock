@@ -3,9 +3,10 @@ hosts.
 
 To build, install, and start perflock system-wide, run
 
-    $ go get github.com/aclements/perflock/cmd/perflock
-    $ cd $GOPATH/src/github.com/aclements/perflock
-    $ ./install.bash
+    $ git clone https://github.com/aclements/perflock
+    $ cd perflock
+    $ go build ./cmd/perflock
+    $ sudo ./install.bash
 
 If your init system is supported, this will also configure perflock to
 start automatically on boot.
@@ -15,8 +16,8 @@ Manual installation
 
 To install perflock manually, run
 
-    $ go get github.com/aclements/perflock/cmd/perflock
-    $ sudo install $GOPATH/bin/perflock /usr/bin/perflock
+    $ GOBIN=$PWD go install github.com/aclements/perflock/cmd/perflock@latest
+    $ sudo install ./perflock /usr/bin/perflock
 
 To start the perflock daemon manually, run
 
