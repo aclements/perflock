@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/aclements/perflock/internal/cpupower"
+	"inet.af/peercred"
 )
 
 var theLock PerfLock
@@ -74,16 +75,17 @@ func (s *Server) Serve() {
 	defer s.drop()
 
 	// Get connection credentials.
-	ucred, err := readCredentials(s.c.(*net.UnixConn))
+	cred, err := peercred.Get(s.c)
 	if err != nil {
 		log.Print("reading credentials: ", err)
 		return
 	}
 
-	u, err := user.LookupId(fmt.Sprintf("%d", ucred.Uid))
 	s.userName = "???"
-	if err == nil {
-		s.userName = u.Username
+	if uid, ok := cred.UserID(); ok {
+		if u, err := user.LookupId(uid); err == nil {
+			s.userName = u.Username
+		}
 	}
 
 	// Receive incoming actions. We do this in a goroutine so the
