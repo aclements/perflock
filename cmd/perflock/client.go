@@ -25,12 +25,6 @@ func NewClient(socketPath string) *Client {
 		log.Fatal("Is the perflock daemon running?")
 	}
 
-	// Send credentials.
-	err = writeCredentials(c.(*net.UnixConn))
-	if err != nil {
-		log.Fatal("failed to send credentials: ", err)
-	}
-
 	gr, gw := gob.NewEncoder(c), gob.NewDecoder(c)
 
 	return &Client{c, gr, gw}
