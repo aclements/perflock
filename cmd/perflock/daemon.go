@@ -12,6 +12,7 @@ import (
 	"net"
 	"os"
 	"os/user"
+	"runtime"
 	"time"
 
 	"github.com/aclements/perflock/internal/cpupower"
@@ -21,17 +22,23 @@ var theLock PerfLock
 
 func doDaemon(path string) {
 	// TODO: Don't start if another daemon is already running.
-	os.Remove(path)
+
+	// Linux supports an abstract namespace for UNIX domain sockets (see unix(7)).
+	// These do not involve the filesystem, and are world-connectable.
+	isAbstractSocket := runtime.GOOS == "linux" && len(path) > 1 && path[0] == '@'
+	if !isAbstractSocket {
+		os.Remove(path)
+	}
 	l, err := net.Listen("unix", path)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer l.Close()
-
-	// Make the socket world-writable/connectable.
-	err = os.Chmod(path, 0777)
-	if err != nil {
-		log.Fatal(err)
+	if !isAbstractSocket {
+		err = os.Chmod(path, 0777)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	// Receive connections.
